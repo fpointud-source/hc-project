@@ -15,16 +15,157 @@ footer{background:var(--ink);color:white;padding:80px clamp(24px,7vw,100px) 35px
 <nav class="nav"><a class="brand" href="#top">HC PROJECT</a><a class="nav-hc" href="#manifesto">Hors Catégorie</a><div class="km-counter" role="status" aria-label="Distance parcourue et dénivelé positif"><small>Sur la route</small><strong id="kmValue">000.0</strong><span class="unit">KM</span><span class="ascent-counter" role="group" aria-label="Dénivelé positif"><small>D+</small><strong id="elevationValue">0000</strong><span class="unit">M</span></span></div><div class="links" id="menu"><a href="#manifesto">Hors Catégorie</a><a href="#summit">Summit Lab</a><a href="#color">Color Your Ride</a><a href="#values">Valeurs</a></div><button class="toggle" aria-label="Ouvrir le menu" aria-expanded="false" aria-controls="menu">☰</button></nav>
 <style>.ascent-counter{display:flex;align-items:baseline;gap:4px;margin-left:3px;padding-left:9px;border-left:1px solid #0003}.ascent-counter small{display:inline;font-size:8px;letter-spacing:.12em;color:#625d54}.ascent-counter strong{min-width:42px;text-align:right;font-size:14px;letter-spacing:.05em}.ascent-counter .unit{font-size:9px;letter-spacing:.12em;color:#625d54}@media(min-width:851px){.km-counter>small{font-size:11px;font-weight:700;letter-spacing:.1em}}@media(max-width:850px){.km-counter{gap:4px;margin-right:12px;padding:8px 7px}.ascent-counter{gap:3px;margin-left:1px;padding-left:6px}.ascent-counter strong{min-width:34px;font-size:11px}}</style>
 <script>(()=>{const output=document.getElementById('elevationValue');let scheduled=false;function update(){const pageEnd=Math.max(1,document.documentElement.scrollHeight-innerHeight),progress=Math.max(0,Math.min(1,scrollY/pageEnd));output.textContent=String(Math.round(2413*progress)).padStart(4,'0')}function schedule(){if(!scheduled){scheduled=true;requestAnimationFrame(()=>{scheduled=false;update()})}}addEventListener('scroll',schedule,{passive:true});addEventListener('resize',update);document.addEventListener('DOMContentLoaded',update)})();</script>
-<header class="hero" id="top" style="background-image:linear-gradient(90deg,rgba(9,12,12,.1),rgba(9,12,12,.36)),url('Assets/HC-Project%20Logo_V2.png');background-size:100% 100%,contain;background-position:center,center var(--nav);background-repeat:no-repeat;background-color:var(--paper);color:var(--ink)"><div class="hero-copy" style="position:absolute;left:50%;bottom:28px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;z-index:2"><a class="btn" href="#manifesto" style="color:var(--ink);border-color:var(--ink);background:rgba(242,239,232,.88);white-space:nowrap">Commencer l’ascension</a></div></header>
+<script>
+(()=>{
+	function initWheels(){
+		const configs=[
+			{root:document.querySelector('#summit-collection'),selector:'.summit-item',mount:document.querySelector('.summit-collection-heading'),label:'Collection Summit Lab'},
+			{root:document.querySelector('#color-collection'),selector:'.color-product',mount:document.querySelector('#color-collection .color-product-grid'),replace:true,label:'Collection Color Your Ride'}
+		];
+		for(const config of configs){
+			if(!config.root||!config.mount)continue;
+			const items=Array.from(config.root.querySelectorAll(config.selector));
+			if(items.length<3)continue;
+			const wheel=document.createElement('div');
+			wheel.className='collection-wheel';
+			wheel.setAttribute('role','region');
+			wheel.setAttribute('aria-label',config.label);
+			const stage=document.createElement('div');
+			stage.className='collection-wheel__stage';
+			stage.setAttribute('role','group');
+			stage.setAttribute('aria-roledescription','carrousel');
+			stage.setAttribute('aria-label','Produits');
+			stage.tabIndex=0;
+			const spokes=document.createElementNS('http://www.w3.org/2000/svg','svg');
+			spokes.classList.add('collection-wheel__spokes');
+			spokes.setAttribute('viewBox','0 0 1000 1000');
+			spokes.setAttribute('aria-hidden','true');
+			for(let index=0;index<12;index++){
+				const rimAngle=(index*30-90)*Math.PI/180;
+				const hubAngle=rimAngle+(index%2===0?18:-18)*Math.PI/180;
+				const spoke=document.createElementNS('http://www.w3.org/2000/svg','line');
+				spoke.classList.add('collection-wheel__spoke');
+				spoke.setAttribute('x1',String(500+Math.cos(hubAngle)*22));
+				spoke.setAttribute('y1',String(500+Math.sin(hubAngle)*22));
+				spoke.setAttribute('x2',String(500+Math.cos(rimAngle)*430));
+				spoke.setAttribute('y2',String(500+Math.sin(rimAngle)*430));
+				spokes.append(spoke);
+			}
+			const decals=document.createElement('div');
+			decals.className='collection-wheel__decals';
+			stage.append(spokes,decals);
+			const logo=document.createElement('span');
+			logo.className='collection-wheel__logo';
+			logo.setAttribute('role','img');
+			logo.setAttribute('aria-label','Logo HC Project');
+			decals.append(logo);
+			const previous=document.createElement('button');
+			previous.type='button';
+			previous.className='collection-wheel__arrow collection-wheel__arrow--previous';
+			previous.setAttribute('aria-label','Faire tourner la roue vers la gauche');
+			previous.title='Produit précédent';
+			previous.textContent='‹';
+			const next=document.createElement('button');
+			next.type='button';
+			next.className='collection-wheel__arrow collection-wheel__arrow--next';
+			next.setAttribute('aria-label','Faire tourner la roue vers la droite');
+			next.title='Produit suivant';
+			next.textContent='›';
+			const status=document.createElement('p');
+			status.className='collection-wheel__status';
+			status.setAttribute('aria-live','polite');
+			status.setAttribute('aria-atomic','true');
+			for(const item of items){
+				item.classList.add('collection-wheel__item');
+				stage.append(item);
+			}
+			wheel.append(stage,previous,next,status);
+			if(config.replace)config.mount.replaceWith(wheel);
+			else config.mount.after(wheel);
+			let active=0,rotation=0;
+			function render(){
+				items.forEach((item,index)=>{
+					const raw=(index-active+items.length)%items.length;
+					const delta=raw>items.length/2?raw-items.length:raw;
+					const position=delta===0?'active':delta===-1?'left':delta===1?'right':delta===-2?'far-left':delta===2?'far-right':'hidden';
+					item.dataset.position=position;
+					item.setAttribute('aria-hidden',position==='hidden'?'true':'false');
+					item.inert=position==='hidden';
+					if(position==='active')item.setAttribute('aria-current','true');
+					else item.removeAttribute('aria-current');
+				});
+				stage.style.setProperty('--wheel-rotation',rotation+'deg');
+				const name=items[active].querySelector('h3')?.textContent.trim()||'';
+				status.textContent=(active+1)+' / '+items.length+' · '+name;
+			}
+			function move(direction){
+				active=(active+direction+items.length)%items.length;
+				rotation+=direction*360/items.length;
+				render();
+			}
+			previous.addEventListener('click',()=>move(-1));
+			next.addEventListener('click',()=>move(1));
+			stage.addEventListener('keydown',event=>{
+				if(event.key==='ArrowLeft'){event.preventDefault();move(-1)}
+				else if(event.key==='ArrowRight'){event.preventDefault();move(1)}
+			});
+			stage.addEventListener('click',event=>{
+				const item=event.target.closest('.collection-wheel__item');
+				if(!item||item.dataset.position==='hidden')return;
+				const target=items.indexOf(item);
+				let delta=(target-active+items.length)%items.length;
+				if(delta>items.length/2)delta-=items.length;
+				if(delta){active=target;rotation+=delta*360/items.length;render()}
+			});
+			render();
+		}
+	}
+	if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initWheels,{once:true});
+	else initWheels();
+})();
+</script>
+<style>@media(min-width:900px){.nav{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto;align-items:center;justify-content:normal;column-gap:24px}.nav-hc{grid-column:2;justify-self:center;margin:0!important;font-size:16.5px!important;font-weight:700}.km-counter{grid-column:3;margin:0}.links{grid-column:4}.universe.reverse>div:last-child{position:relative}.color-collection-link{position:absolute;left:calc(50% + min(12vw,230px));top:-90px;transform:translateX(-50%);margin:0!important;width:240px!important;height:52px!important}}#summit,#summit-collection{z-index:6}.bike-marker{z-index:1!important}.summit-cta,.summit-cta:hover,.summit-cta:focus,.summit-cta:focus-visible,.summit-cta:active,.color-collection-link,.color-collection-link:hover,.color-collection-link:focus,.color-collection-link:focus-visible,.color-collection-link:active{background:#fff!important;width:240px!important;height:52px!important}</style><header class="hero" id="top" style="background-image:url('Assets/HC-Project-logo-velo-test.svg'),url('Assets/HC-Project%20Logo_V2.png');background-size:contain,contain;background-position:center,center;background-repeat:no-repeat,no-repeat;background-color:var(--paper);color:var(--ink)"><div class="hero-copy" style="position:absolute;left:50%;bottom:28px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;z-index:2"><a class="btn" href="#manifesto" style="color:var(--ink);border-color:var(--ink);background:rgba(242,239,232,.88);white-space:nowrap">Commencer l’ascension</a></div></header>
 <main><div class="journey" aria-hidden="true"><svg viewBox="0 0 1000 3500" preserveAspectRatio="none"><path class="edge" d="M500 0 C780 280 240 600 560 930 C830 1210 250 1560 620 1880 C850 2200 260 2530 560 2860 C750 3070 610 3330 500 3500"/><path class="road" d="M500 0 C780 280 240 600 560 930 C830 1210 250 1560 620 1880 C850 2200 260 2530 560 2860 C750 3070 610 3330 500 3500"/><path class="line" d="M500 0 C780 280 240 600 560 930 C830 1210 250 1560 620 1880 C850 2200 260 2530 560 2860 C750 3070 610 3330 500 3500"/><path class="progress" pathLength="1" style="stroke:transparent;stroke-width:0" d="M500 0 C780 280 240 600 560 930 C830 1210 250 1560 620 1880 C850 2200 260 2530 560 2860 C750 3070 610 3330 500 3500"/></svg></div><div class="bike-marker" aria-hidden="true"><svg viewBox="0 0 52 30"><g fill="none" stroke="#b39b76" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="21" r="8"/><circle cx="42" cy="21" r="8"/><path d="M10 21 17 8 22 21 10 21M22 21 30 8 42 21 22 21M17 8h13m0 0 4-4h5m-25 4h6m2 13 4 3"/></g></svg></div>
 <section class="section" id="manifesto"><div class="container panel reveal"><span class="eyebrow">Hors Catégorie</span><h2>Les plus belles routes ne sont jamais les plus faciles.</h2><p>HC Project est né d’une conviction simple : le vélo prend tout son sens lorsque la route devient un projet et que l’effort ouvre de nouveaux horizons.</p><div class="manifesto-lines">Chaque sortie est un défi.<br>Chaque col est une histoire.<br>Chaque sommet est une victoire.</div></div></section>
-<section class="section" id="summit"><div class="universe reveal"><div class="visual summit"><span>SUMMIT LAB</span></div><div style="max-width:min(65vw,640px)"><span class="eyebrow">Univers 01</span><h2 style="font-size:clamp(24px,3vw,44px)">SUMMIT LAB</h2><p style="max-width:35vw">La collection destinée aux grandes ascensions. Une approche sobre et technique, inspirée des cols européens.</p><div class="palette"><i style="background:#171918"></i><i style="background:#313b40"></i><i style="background:#173635"></i><i style="background:#b8aa91"></i></div></div></div><a class="btn summit-cta" href="#summit-collection" aria-controls="summit-collection" aria-expanded="false" style="top:72%;transform:translate(calc(-50% - min(136px,calc(20vw + 16px))),-50%)" onclick="const collection=document.getElementById('summit-collection');collection.style.display='grid';this.setAttribute('aria-expanded','true')">Bien équipé</a><aside class="summit-feature" aria-label="Équipement Summit Lab" style="top:70%"><div class="summit-feature-image" role="img" aria-label="Maillot Horizon vert forêt"></div><p><span class="eyebrow">Équipement Summit</span><strong>Maillot Horizon</strong></p></aside></section>
-<style>#summit .universe>div:last-child{width:min(24vw,350px);justify-self:end}@media(max-width:520px){#summit .universe>div:last-child{width:min(82vw,350px)!important}#summit .universe>div:last-child p{max-width:100%!important}}</style>
+<section class="section" id="summit"><div class="universe reveal"><div class="visual summit"><span>SUMMIT LAB</span></div><div style="max-width:min(65vw,640px)"><span class="eyebrow">Univers 01</span><h2 style="font-size:clamp(24px,3vw,44px)">SUMMIT LAB</h2><p style="max-width:35vw">La collection destinée aux grandes ascensions. Une approche sobre et technique, inspirée des plus grands cols</p><div class="palette"><i style="background:#171918"></i><i style="background:#313b40"></i><i style="background:#173635"></i><i style="background:#b8aa91"></i></div></div></div><a class="btn summit-cta" href="#summit-collection" aria-controls="summit-collection" aria-expanded="false" style="top:72%;transform:translate(calc(-50% - min(136px,calc(20vw + 16px))),-50%)" onclick="const collection=document.getElementById('summit-collection');collection.style.display='grid';this.setAttribute('aria-expanded','true')">Bien équipé</a><aside class="summit-feature" aria-label="Équipement Summit Lab" style="top:70%"><div class="summit-feature-image" role="img" aria-label="Maillot Horizon vert forêt"></div><p><span class="eyebrow">Équipement Summit</span><strong>Maillot Horizon</strong></p></aside></section>
+<style>#summit .universe>div:last-child{width:min(24vw,350px);justify-self:end}@media(max-width:520px){#summit .universe>div:last-child{width:min(82vw,350px)!important}#summit .universe>div:last-child p{max-width:100%!important}#summit .summit-cta{top:10.5%!important}}</style>
+<style>#summit .universe>div:last-child,.universe.reverse>div:last-child{position:relative;z-index:2}#summit .universe>div:last-child>p,.universe.reverse>div:last-child>p{position:relative;z-index:3;background:rgba(242,239,232,.96);padding:6px 8px}@media(max-width:520px){#summit .summit-cta{top:10.5%!important;left:50%!important;transform:translate(-50%,-50%)!important}}@media(min-width:521px){#summit .summit-cta{top:28%!important}}</style>
 <style>@media(min-width:851px){#top{z-index:1;overflow:visible}.journey>svg{transform:translateY(2cm)}#top .hero-copy{bottom:calc(0px - 1cm)!important;z-index:5!important}}</style>
 <style>.visual.color{background-image:url('Assets/Designer.png');background-position:center;background-size:cover;aspect-ratio:3/2;min-height:0}</style>
 <style>.nav-hc{display:none}@media(min-width:851px){.nav-hc{display:block;margin-left:auto;margin-right:52px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap}.nav .km-counter{margin-left:0}.nav .links a:first-child{display:none}}@media(max-width:850px){.nav-hc{display:none}}</style>
 <style>.color-collection-link{display:table;margin-top:14px}.color-collection{position:relative;z-index:6;background:var(--paper)}.color-collection h2{font-size:clamp(32px,4vw,56px);margin:18px 0 28px}.color-product-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:16px;margin-top:22px}.color-product{min-width:0;border-top:1px solid #b8aa91;padding-top:12px}.color-product-image{width:100%;aspect-ratio:1;background-image:url('Assets/Color%20your%20Ride.png');background-size:500% auto;background-repeat:no-repeat;background-color:#171918}.color-product-image.accessory{background-size:contain}#color-collection .color-product:nth-child(11) .color-product-image{background-image:url('Assets/Color-gants.png');aspect-ratio:352/211}#color-collection .color-product:nth-child(12) .color-product-image{background-image:url('Assets/Color-manchettes.png');aspect-ratio:238/211}#color-collection .color-product:nth-child(13) .color-product-image{background-image:url('Assets/Color-lunettes.png');aspect-ratio:286/211}#color-collection .color-product:nth-child(14) .color-product-image{background-image:url('Assets/Color-bidons.png');aspect-ratio:266/211}#color-collection .color-product:nth-child(15) .color-product-image{background-image:url('Assets/Color-editions.png');aspect-ratio:394/211}.color-product h3{font-size:16px;margin:12px 0 4px}.color-product p{font-size:13px;margin:0;color:#555}</style>
 <style>.bike-marker g{stroke:#6b6158}.bike-marker.rainbow g{animation:bike-rainbow 3s linear infinite}@keyframes bike-rainbow{0%,100%{stroke:#ef3340}16.666%{stroke:#ff8c00}33.333%{stroke:#ffd500}50%{stroke:#32b653}66.666%{stroke:#1686f8}83.333%{stroke:#7738c8}}</style>
+<style>
+.collection-wheel{grid-column:1/-1;position:relative;isolation:isolate;width:100%;max-width:1200px;margin:28px auto 12px}
+.collection-wheel__stage{--wheel-rotation:0deg;position:relative;width:100%;height:max(clamp(380px,42vw,540px),min(76vw,564px));overflow:hidden;perspective:1200px;isolation:isolate}
+.collection-wheel__stage::before{content:"";position:absolute;z-index:4;left:50%;top:50%;width:min(76%,540px);aspect-ratio:1;border:1px solid #101114;border-radius:50%;background:repeating-linear-gradient(112deg,rgba(255,255,255,.06) 0 1px,transparent 1px 5px),radial-gradient(circle closest-side,transparent 0 81%,#17181c 82%,#4e4f54 86%,#1c1d21 91%,#393a3f 95%,#111214 97%,#4b4c50 99%,#16171a 100%);box-shadow:inset 0 0 0 2px rgba(255,255,255,.12);filter:drop-shadow(0 3px 3px #0005);transform:translate(-50%,-50%)}
+.collection-wheel__spokes{position:absolute;z-index:1;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;transform:rotate(var(--wheel-rotation));transform-origin:center;transition:transform .8s cubic-bezier(.2,.75,.25,1)}
+.collection-wheel__decals{position:absolute;z-index:4;inset:0;transform:rotate(var(--wheel-rotation));transform-origin:center;transition:transform .8s cubic-bezier(.2,.75,.25,1);pointer-events:none}
+.collection-wheel__logo{position:absolute;top:3%;left:50%;display:block;box-sizing:border-box;width:40px;height:36px;border:1px solid #17181c;border-radius:4px;background:#f2efe8 url('Assets/HC-Project%20Logo_V2.png') no-repeat -43px -5px;background-size:132px 70.6px;box-shadow:0 2px 6px #0008;transform:translateX(-50%)}
+.collection-wheel__spoke{fill:none;stroke:#292a2e;stroke-width:3;stroke-linecap:round;opacity:.86}
+.collection-wheel__spoke:nth-child(even){stroke:#66676b;opacity:.72}
+.collection-wheel__stage::after{content:"";position:absolute;z-index:2;left:50%;top:50%;width:34px;aspect-ratio:1;border:4px solid #25262a;border-radius:50%;background:#85868a;box-shadow:inset 0 0 0 3px #161719,0 1px 2px #0005;transform:translate(-50%,-50%);pointer-events:none}
+.collection-wheel__item{box-sizing:border-box;position:absolute!important;left:50%;top:50%;width:clamp(240px,25vw,320px);margin:0!important;padding:14px!important;border:1px solid #b8aa91!important;border-radius:6px;background:#fff;box-shadow:0 14px 32px #17191824;opacity:0;visibility:hidden;pointer-events:none;transform:translate(-50%,-50%) scale(.45);transition:left .72s cubic-bezier(.2,.75,.25,1),top .72s cubic-bezier(.2,.75,.25,1),width .72s,transform .72s cubic-bezier(.2,.75,.25,1),opacity .42s,filter .42s;transform-style:preserve-3d}
+.collection-wheel__item[data-position="active"]{z-index:5;left:50%;top:50%;width:clamp(240px,25vw,320px);opacity:1;visibility:visible;pointer-events:auto;transform:translate(-50%,-50%) scale(1)}
+.collection-wheel__item[data-position="left"]{z-index:3;left:calc(50% - clamp(180px,26vw,340px));top:54%;width:clamp(170px,19vw,245px);opacity:.78;visibility:visible;pointer-events:auto;filter:saturate(.75);transform:translate(-50%,-50%) rotateY(28deg) scale(.78)}
+.collection-wheel__item[data-position="right"]{z-index:3;left:calc(50% + clamp(180px,26vw,340px));top:54%;width:clamp(170px,19vw,245px);opacity:.78;visibility:visible;pointer-events:auto;filter:saturate(.75);transform:translate(-50%,-50%) rotateY(-28deg) scale(.78)}
+.collection-wheel__item[data-position="far-left"]{z-index:2;left:calc(50% - clamp(270px,43vw,530px));top:57%;width:clamp(145px,16vw,205px);opacity:.36;visibility:visible;filter:saturate(.55);transform:translate(-50%,-50%) rotateY(38deg) scale(.6)}
+.collection-wheel__item[data-position="far-right"]{z-index:2;left:calc(50% + clamp(270px,43vw,530px));top:57%;width:clamp(145px,16vw,205px);opacity:.36;visibility:visible;filter:saturate(.55);transform:translate(-50%,-50%) rotateY(-38deg) scale(.6)}
+.collection-wheel__item .summit-product-image,.collection-wheel__item .color-product-image{width:100%;aspect-ratio:1}
+.collection-wheel__item h3{margin:12px 0 4px;font-size:16px}
+.collection-wheel__item p{margin:0;color:#555;font-size:13px}
+.collection-wheel__item .eyebrow{display:block;margin-bottom:6px}
+.collection-wheel__arrow{position:absolute;z-index:8;top:50%;display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid #171918;border-radius:50%;background:#fff;color:#171918;font-size:28px;line-height:1;cursor:pointer;transform:translateY(-50%);transition:background .2s,color .2s}
+.collection-wheel__arrow:hover,.collection-wheel__arrow:focus-visible{background:#171918;color:#fff}
+.collection-wheel__arrow:focus-visible{outline:3px solid #b8aa91;outline-offset:3px}
+.collection-wheel__arrow--previous{left:8px}.collection-wheel__arrow--next{right:8px}
+.collection-wheel__status{min-height:20px;margin:0;text-align:center;color:#625d54;font-size:12px}
+@media(max-width:700px){.collection-wheel{margin:16px auto 4px}.collection-wheel__stage{height:350px}.collection-wheel__stage::before{width:min(100%,340px);border-color:rgba(107,97,88,.78);background:repeating-conic-gradient(transparent 0deg 28deg,rgba(49,59,64,.48) 28.5deg 30deg,transparent 30.5deg 60deg)}.collection-wheel__item[data-position="active"]{width:min(62vw,230px)}.collection-wheel__item[data-position="left"]{left:calc(50% - min(38vw,145px));top:56%;width:min(48vw,180px);transform:translate(-50%,-50%) rotateY(28deg) scale(.72)}.collection-wheel__item[data-position="right"]{left:calc(50% + min(38vw,145px));top:56%;width:min(48vw,180px);transform:translate(-50%,-50%) rotateY(-28deg) scale(.72)}.collection-wheel__item[data-position="far-left"]{left:calc(50% - min(76vw,290px));width:min(40vw,150px)}.collection-wheel__item[data-position="far-right"]{left:calc(50% + min(76vw,290px));width:min(40vw,150px)}.collection-wheel__arrow{width:38px;height:38px;font-size:24px}.collection-wheel__arrow--previous{left:2px}.collection-wheel__arrow--next{right:2px}}
+@media(prefers-reduced-motion:reduce){.collection-wheel__stage::before,.collection-wheel__item,.collection-wheel__arrow{transition:none}}
+@media(max-width:700px){.collection-wheel__stage{width:calc(100% + 30px);height:max(350px,min(420px,calc(100vw - 10px)));margin-left:-15px}.collection-wheel__stage::before{width:min(100%,380px);border-color:#101114;background:repeating-linear-gradient(112deg,rgba(255,255,255,.06) 0 1px,transparent 1px 5px),radial-gradient(circle closest-side,transparent 0 78%,#17181c 79%,#4e4f54 83%,#1c1d21 88%,#393a3f 93%,#111214 96%,#4b4c50 98%,#16171a 100%)}}
+@media(prefers-reduced-motion:reduce){.collection-wheel__spokes,.collection-wheel__decals{transition:none}}
+@media(max-width:700px){.collection-wheel__logo{width:28px;height:25px;padding:1px;background-position:-30px -3.7px;background-size:92px 49.2px}}
+</style>
 <style>.bike-marker{z-index:5}#summit .summit-cta{position:absolute;left:50%;top:65%;z-index:4;transform:translate(-50%,-50%);width:min(240px,40vw);box-sizing:border-box;white-space:normal;text-align:center}</style><script>(()=>{const bike=document.querySelector('.bike-marker'),button=document.querySelector('.summit-cta'),path=document.querySelector('.progress'),svg=path.ownerSVGElement,section=document.querySelector('#summit'),pathLength=path.getTotalLength();function alignButton(){const bounds=button.getBoundingClientRect(),targetY=(bounds.top+bounds.bottom)/2,matrix=svg.getScreenCTM();let low=0,high=pathLength;for(let i=0;i<18;i++){const distance=(low+high)/2,point=path.getPointAtLength(distance),svgPoint=svg.createSVGPoint();svgPoint.x=point.x;svgPoint.y=point.y;if(svgPoint.matrixTransform(matrix).y<targetY)low=distance;else high=distance}const point=path.getPointAtLength((low+high)/2),svgPoint=svg.createSVGPoint();svgPoint.x=point.x;svgPoint.y=point.y;button.style.left=(svgPoint.matrixTransform(matrix).x-section.getBoundingClientRect().left)+'px'}function checkContact(){alignButton();const collection=document.querySelector('#summit-collection');if(!collection||collection.style.display==='grid'||getComputedStyle(bike).visibility!=='visible')return;const bikeRect=bike.getBoundingClientRect(),buttonRect=button.getBoundingClientRect();if(bikeRect.left<buttonRect.right&&bikeRect.right>buttonRect.left&&bikeRect.top<buttonRect.bottom&&bikeRect.bottom>buttonRect.top){collection.style.display='grid';button.setAttribute('aria-expanded','true')}}function scheduleCheck(){requestAnimationFrame(()=>requestAnimationFrame(checkContact))}addEventListener('scroll',scheduleCheck,{passive:true});addEventListener('resize',scheduleCheck);scheduleCheck()})();</script>
 <section class="summit-collection" id="summit-collection" aria-labelledby="summit-collection-title"><div class="summit-collection-heading"><span class="eyebrow">Summit Lab</span><h2 id="summit-collection-title">La collection d’ascension</h2><p>Des pièces pensées pour aller plus loin.</p></div><article class="summit-item"><div class="summit-product-image" role="img" aria-label="Maillot Horizon vert forêt" style="background-position:0% 87%"></div><h3>Maillot Horizon</h3><p>Vert forêt · L’appel du grand air.</p></article><article class="summit-item"><div class="summit-product-image" role="img" aria-label="Maillot Altitude orange alpin" style="background-position:25% 87%"></div><h3>Maillot Altitude</h3><p>Orange alpin · Affirmez votre ascension.</p></article><article class="summit-item"><div class="summit-product-image" role="img" aria-label="Casquette Summit Lab noire" style="background-position:50% 87%"></div><h3>Casquette Summit Lab</h3><p>Noir · Le détail qui fait la différence.</p></article><article class="summit-item"><div class="summit-product-image" role="img" aria-label="Maillot Glacier bleu" style="background-position:75% 87%"></div><h3>Maillot Glacier</h3><p>Bleu glacier · La fraîcheur des sommets.</p></article><article class="summit-item"><div class="summit-product-image" role="img" aria-label="Cuissard Summit noir et orange alpin" style="background-position:100% 87%"></div><h3>Cuissard Summit</h3><p>Noir et orange alpin · Endurance. Caractère. Sommet.</p></article><article class="summit-item"><span class="eyebrow">Gamme Core</span><div class="summit-product-image" role="img" aria-label="Maillot manches longues marine" style="background-position:100% 30%"></div><h3>Maillot manches longues</h3><p>Marine · Pour les sorties qui comptent.</p></article><article class="summit-item"><div class="summit-product-image" role="img" aria-label="Maillot essentiel noir" style="background-position:0% 30%"></div><h3>Maillot essentiel</h3><p>Noir · Minimaliste. Technique. Intemporel.</p></article><article class="summit-item"><div class="summit-product-image" role="img" aria-label="Cuissard performance noir" style="background-position:25% 30%"></div><h3>Cuissard performance</h3><p>Noir · Confort longue distance.</p></article><article class="summit-item"><div class="summit-product-image" role="img" aria-label="Gilet coupe-vent taupe" style="background-position:50% 30%"></div><h3>Gilet coupe-vent</h3><p>Taupe · Léger. Compact. Indispensable.</p></article><article class="summit-item"><div class="summit-product-image" role="img" aria-label="Veste imperméable noire" style="background-position:75% 30%"></div><h3>Veste imperméable</h3><p>Noir · Protection sans compromis.</p></article></section>
 <section class="section" id="color"><div class="universe reverse reveal"><div class="color-visual-wrap"><div class="visual color" role="img" aria-label="Cyclistes HC Project face au coucher de soleil en montagne"></div></div><div><span class="eyebrow">Univers 02</span><h2>COLOR YOUR RIDE</h2><p>La couleur comme signature. Des équipements expressifs pour rouler avec personnalité, sans compromettre la fonctionnalité.</p><div class="palette"><i style="background:#d85d26"></i><i style="background:#7aa8bc"></i><i style="background:#b43832"></i><i style="background:#e2ae27"></i></div><a class="btn color-collection-link" href="#color-collection" style="display:flex;align-items:center;justify-content:center;width:max-content;margin:14px auto 0">Fun here</a></div></div></section>

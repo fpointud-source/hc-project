@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 900" role="img" aria-labelledby="title description">
+  <title id="title">Proposition de logo HC Project avec vélo</title>
+  <desc id="description">Un vélo de route gravissant un sommet, au-dessus du monogramme HC Project.</desc>
+  <rect width="1200" height="900" fill="#f2efe8"/>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M365 480 600 116 835 480" stroke="#171918" stroke-width="23"/>
+    <path d="m438 480 162-251 163 251" stroke="#9a8268" stroke-width="13"/>
+  </g>
+  <g fill="none" stroke="#171918" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="480" cy="414" r="52" stroke-width="9"/>
+    <circle cx="720" cy="414" r="52" stroke-width="9"/>
+    <path d="M480 414 585 414 555 334 480 414M555 334 655 334 585 414M655 334 720 414M555 334 549 316M530 316h34M655 334l12-22h24" stroke-width="10"/>
+    <circle cx="585" cy="414" r="9" fill="#9a8268" stroke="none"/>
+    <path d="M585 414 608 435M585 414 562 435" stroke-width="7"/>
+  </g>
+  <text x="600" y="620" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="116" font-weight="700" letter-spacing="-7" fill="#171918">H<tspan fill="#786858">C</tspan></text>
+  <text x="600" y="691" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="40" letter-spacing="19" fill="#171918">PROJECT</text>
+  <path d="M555 731h90" stroke="#171918" stroke-width="3"/>
+  <text x="600" y="782" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="21" letter-spacing="5" fill="#353839">CONÇU POUR CEUX QUI VISENT LES SOMMETS</text>
+</svg>

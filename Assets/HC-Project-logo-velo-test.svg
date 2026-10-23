@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1254 638" role="img" aria-labelledby="title description">
+  <title id="title">Test du logo HC Project avec le vélo animé</title>
+  <desc id="description">Le logo original avec le petit vélo taupe placé à gauche du H, près du départ de la montagne.</desc>
+  <image href="HC-Project%20Logo_V2.png" width="1254" height="638"/>
+  <g transform="translate(463 262) rotate(-57) scale(1.65) translate(-10 -21)" fill="none" stroke="#6d5e53" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="10" cy="21" r="8"/>
+    <circle cx="42" cy="21" r="8"/>
+    <path d="M10 21 17 8 22 21 10 21M22 21 30 8 42 21 22 21M17 8h13m0 0 4-4h5m-25 4h6m2 13 4 3"/>
+  </g>
+</svg>
